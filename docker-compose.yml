@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Python Backend API
+  api:
+    build: 
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: pyhabit-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/pyhabit
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=dev_secret_key_change_me
+    depends_on:
+      - db
+      - redis
+    networks:
+      - pyhabit-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: pyhabit-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pyhabit
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pyhabit-network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: pyhabit-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pyhabit-network
+
+  # Frontend (Dev Mode)
+  # Keeping it managed by host npm usually, but can be dockerized.
+  # For now, we assume user runs `npm run dev` in host.
+
+networks:
+  pyhabit-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
