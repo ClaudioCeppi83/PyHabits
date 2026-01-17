@@ -1,0 +1,19 @@
+[MAIN]
+init-hook='import sys; sys.path.insert(0, ".venv/lib/python3.11/site-packages")'
+
+[MESSAGES CONTROL]
+disable=
+    import-error,
+    broad-exception-caught,
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    wrong-import-order,
+    wrong-import-position,
+    trailing-whitespace,
+    line-too-long,
+    bad-indentation,
+    unused-import
+
+[FORMAT]
+indent-string='    '

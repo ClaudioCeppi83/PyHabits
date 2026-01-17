@@ -1,48 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 import { CodeEditor } from "@/components/editor/code-editor";
 import { ArrowLeft, Lightbulb, Play } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// Mock Challenge Data (will fetch from API later)
-const MOCK_CHALLENGE = {
-    id: 1,
-    title: "Condicionales Simples",
-    description: "Crea una función llamada `check_number` que reciba un número `n`. Si el número si es mayor a 10, debe retornar la cadena \"Mayor\". Si no, retorna \"Menor\".",
-    initialCode: "def check_number(n):\n    # Tu código aquí\n    pass",
-    hints: [
-        "Usa una sentencia `if` para comparar `n` con 10.",
-        "Recuerda usar la indentación correcta en Python.",
-        "Usa `return` para enviar el resultado."
-    ]
-};
-
 export default function ChallengePage() {
-    // const params = useParams(); // Unused in MVP
-    // const router = useRouter(); // Unused in MVP
-    const [code, setCode] = useState(MOCK_CHALLENGE.initialCode);
+    const params = useParams();
+    const router = useRouter();
+    const challengeId = params.id;
+    
+    const [challenge, setChallenge] = useState<any>(null);
+    const [code, setCode] = useState("");
+    const [loading, setLoading] = useState(true);
     const [output, setOutput] = useState<string | null>(null);
     const [status, setStatus] = useState<"idle" | "running" | "success" | "error">("idle");
     const [hintIndex, setHintIndex] = useState(-1);
+
+    useEffect(() => {
+        async function fetchChallenge() {
+            try {
+                const data = await apiRequest(`/challenges/${challengeId}`);
+                setChallenge(data);
+                setCode(data.initial_code || "");
+            } catch (err) {
+                console.error("Error fetching challenge:", err);
+                router.push("/dashboard");
+            } finally {
+                setLoading(false);
+            }
+        }
+        if (challengeId) fetchChallenge();
+    }, [challengeId, router]);
 
     const handleRun = async () => {
         setStatus("running");
         setOutput(null);
         
-        // Mock Execution Delay
-        setTimeout(() => {
-            // Mock Validation Logic
-            if (code.includes("if n > 10") && code.includes("return \"Mayor\"")) {
-                setStatus("success");
-                setOutput("✔ Test Pasado: check_number(11) -> 'Mayor'\n✔ Test Pasado: check_number(5) -> 'Menor'");
-            } else {
-                setStatus("error");
-                setOutput("✘ Error: Tu función no retorna 'Mayor' cuando n es 11.");
-            }
-        }, 1500);
+        try {
+            const data = await apiRequest("/execution/run", {
+                method: "POST",
+                body: JSON.stringify({
+                    code,
+                    challenge_id: parseInt(challengeId as string),
+                    language: "python"
+                })
+            });
+
+            setOutput(data.stdout + (data.stderr ? "\n" + data.stderr : ""));
+            setStatus(data.status);
+        } catch (err: any) {
+            console.error("Execution error:", err);
+            setOutput("Error de conexión con el servidor de ejecución.");
+            setStatus("error");
+        }
     };
+
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+    );
+
+    if (!challenge) return null;
 
     return (
         <div className="h-[calc(100vh-80px)] flex flex-col gap-4">
@@ -53,8 +76,8 @@ export default function ChallengePage() {
                         <ArrowLeft className="h-5 w-5" />
                     </Link>
                     <div>
-                        <h1 className="text-xl font-bold">{MOCK_CHALLENGE.title}</h1>
-                        <p className="text-xs text-muted-foreground">Reto #12 • Dificultad: Fácil</p>
+                        <h1 className="text-xl font-bold">{challenge.title}</h1>
+                        <p className="text-xs text-muted-foreground">Reto #{challenge.id} • Dificultad: {challenge.difficulty}</p>
                     </div>
                 </div>
                 
@@ -76,7 +99,7 @@ export default function ChallengePage() {
             <div className="grid lg:grid-cols-2 gap-6 flex-1 min-h-0">
                 {/* Left: Editor */}
                 <div className="flex flex-col gap-4 h-full relative">
-                    <CodeEditor initialCode={MOCK_CHALLENGE.initialCode} onChange={setCode} />
+                    <CodeEditor initialCode={challenge.initial_code} onChange={setCode} />
                 </div>
 
                 {/* Right: Context & Output */}
@@ -85,7 +108,7 @@ export default function ChallengePage() {
                     <div className="bg-card border rounded-lg p-6">
                         <h3 className="font-semibold mb-2">Objetivo</h3>
                         <p className="text-muted-foreground leading-relaxed text-sm">
-                            {MOCK_CHALLENGE.description}
+                            {challenge.description}
                         </p>
                     </div>
 
@@ -96,7 +119,7 @@ export default function ChallengePage() {
                                 <Lightbulb className="h-4 w-4 text-amber-500" />
                                 Pistas
                             </h3>
-                            {hintIndex < MOCK_CHALLENGE.hints.length - 1 && (
+                            {hintIndex < (challenge.hints?.length || 0) - 1 && (
                                 <button 
                                     onClick={() => setHintIndex(i => i + 1)}
                                     className="text-xs text-primary hover:underline"
@@ -110,7 +133,7 @@ export default function ChallengePage() {
                             <p className="text-xs text-muted-foreground italic">Si te atascas, pide una pista.</p>
                         ) : (
                             <ul className="space-y-2">
-                                {MOCK_CHALLENGE.hints.slice(0, hintIndex + 1).map((hint, i) => (
+                                {(challenge.hints || []).slice(0, hintIndex + 1).map((hint: string, i: number) => (
                                     <li key={i} className="text-sm bg-muted/50 p-2 rounded border border-l-4 border-l-amber-500">
                                         {hint}
                                     </li>

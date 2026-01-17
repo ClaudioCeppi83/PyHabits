@@ -1,12 +1,8 @@
 {
-  "css.lint.unknownAtRules": "ignore",
-  "scss.lint.unknownAtRules": "ignore",
-  "less.lint.unknownAtRules": "ignore",
-  "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
-    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
-  ],
-  "files.associations": {
-    "*.css": "tailwindcss"
-  }
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": false,
+    "python.defaultInterpreterPath": "${workspaceFolder}/apps/api/.venv/bin/python",
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false
 }

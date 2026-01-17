@@ -42,14 +42,14 @@ La web estará disponible en: `http://localhost:3000`
 
 Sigue estos pasos para validar el flujo principal:
 
-1.  **Login**: Ve a `/login`. (Por ahora es simulado, cualquier email/pass funciona).
-2.  **Dashboard**: Verás tu racha y el reto del día.
-3.  **Reto**: Haz clic en "Empezar Reto".
-4.  **Editor**:
+1.**Login**: Ve a `/login`. (Por ahora es simulado, cualquier email/pass funciona).
+2.**Dashboard**: Verás tu racha y el reto del día.
+3.**Reto**: Haz clic en "Empezar Reto".
+4.**Editor**:
     - Escribe el código solicitado (ej: `if n > 10: return "Mayor"`).
     - Haz clic en "Ejecutar".
     - Verás el resultado en la consola simulada.
-5.  **Ajustes**: Prueba el cambio de tema (Claro/Oscuro) en el sidebar.
+5.**Ajustes**: Prueba el cambio de tema (Claro/Oscuro) en el sidebar.
 
 ## 📂 Estructura
 

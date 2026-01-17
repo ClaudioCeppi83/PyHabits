@@ -1,11 +1,50 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
+  const [user, setUser] = useState<any>(null);
+  const [challenge, setChallenge] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    async function fetchData() {
+        try {
+            const [userData, challengeData] = await Promise.all([
+                apiRequest("/auth/me"),
+                apiRequest("/challenges/daily")
+            ]);
+            setUser(userData);
+            setChallenge(challengeData);
+        } catch (err) {
+            console.error("Fetch error:", err);
+            router.push("/login");
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchData();
+  }, [router]);
+
+  if (loading) {
+      return (
+          <div className="flex items-center justify-center min-vh-1/2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+      );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header Section */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Hola, Claudio 👋</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+            Hola, {user?.display_name || 'Gamer'} 👋
+        </h1>
         <p className="text-muted-foreground mt-1">Hoy solo necesitas avanzar un poco.</p>
       </div>
 
@@ -14,12 +53,14 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <span className="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded">Reto del día</span>
-                <h3 className="text-lg font-semibold mt-2">Condicionales Simples</h3>
-                <p className="text-sm text-muted-foreground">Tiempo estimado: ~8 min</p>
+                <h3 className="text-lg font-semibold mt-2">{challenge?.title || "Cargando..."}</h3>
+                <p className="text-sm text-muted-foreground">Tiempo estimado: ~{challenge?.estimated_minutes || 5} min</p>
             </div>
-            <Link href="/dashboard/challenge/1" className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium shadow-sm transition-all md:w-auto w-full text-center">
-                ▶ Empezar Reto
-            </Link>
+            {challenge && (
+                <Link href={`/dashboard/challenge/${challenge.id}`} className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium shadow-sm transition-all md:w-auto w-full text-center">
+                    ▶ Empezar Reto
+                </Link>
+            )}
         </div>
       </div>
 

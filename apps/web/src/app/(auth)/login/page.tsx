@@ -3,19 +3,35 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    // TODO: Connect to API
-    setTimeout(() => {
-        setLoading(false);
+    setError(null);
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+        const data = await apiRequest("/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+        });
+
+        localStorage.setItem("token", data.access_token);
         router.push("/dashboard");
-    }, 1000);
+    } catch (err: any) {
+        setError(err.message);
+    } finally {
+        setLoading(false);
+    }
   }
 
   return (
@@ -28,10 +44,16 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
+        {error && (
+            <div className="p-3 text-sm text-red-500 bg-red-100 border border-red-200 rounded-md">
+                {error}
+            </div>
+        )}
         <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="email">Email</label>
             <input 
                 id="email"
+                name="email"
                 type="email" 
                 placeholder="hola@ejemplo.com"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -42,6 +64,7 @@ export default function LoginPage() {
             <label className="text-sm font-medium" htmlFor="password">Contraseña</label>
             <input 
                 id="password"
+                name="password"
                 type="password" 
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
